@@ -1,9 +1,9 @@
 # Project Initiation Document (PID)
 
-**Organization:** WAUIG Bank
-**Project Name:** Enterprise Security Discovery Orchestration Framework
-**Document Version:** 1.0
-**Document Date:** 2025-11-18
+*Organization: WAUIG Bank
+*Project Name: Enterprise Security Discovery Orchestration Framework
+*Document Version: 1.0
+*Document Date: 2025-11-18
 
 ---
 

@@ -1,9 +1,9 @@
 # Project Management Plan (Charter)
 
-**Organization:** WAUIG Bank
-**Project Name:** Enterprise Security Discovery Orchestration Framework
-**Document Version:** 1.0
-**Document Date:** 2025-12-05
+*Organization: WAUIG Bank
+*Project Name: Enterprise Security Discovery Orchestration Framework
+*Document Version: 1.0
+*Document Date: 2025-12-05
 
 ---
 
