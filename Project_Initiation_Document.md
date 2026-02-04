@@ -1,6 +1,6 @@
 # Project Initiation Document (PID)
 
-**Organization:** WAU Bank
+**Organization:** WAUIG Bank
 **Project Name:** Enterprise Security Discovery Orchestration Framework
 **Document Version:** 1.0
 **Document Date:** 2025-11-18
@@ -9,7 +9,7 @@
 
 ## 1. Project Overview
 
-WAU Bank is initiating the development of an **agentless, non-exploitative Security Discovery Orchestration Framework** designed to assess network, identity, host, application, and telemetry exposure from a low-privilege vantage point.
+WAUIG Bank is initiating the development of an **agentless, non-exploitative Security Discovery Orchestration Framework** designed to assess network, identity, host, application, and telemetry exposure from a low-privilege vantage point.
 
 The framework will be used by Security Engineering and Red Team functions to:
 
@@ -23,7 +23,7 @@ This project explicitly excludes exploitation, credential abuse, persistence mec
 
 ## 2. Business Need
 
-WAU Bank requires a controlled and auditable mechanism to evaluate security exposure without introducing operational or regulatory risk. Many existing tools:
+WAUIG Bank requires a controlled and auditable mechanism to evaluate security exposure without introducing operational or regulatory risk. Many existing tools:
 
 * Rely on exploit-style techniques
 * Require elevated credentials or agents
@@ -66,7 +66,7 @@ The primary objectives of this project are to:
 
 * The tool will be executed only by authorized security personnel
 * All discovery actions must be attributable, observable, and repeatable
-* Development will adhere to WAU Bank SDLC governance requirements
+* Development will adhere to WAUIG Bank SDLC governance requirements
 * Any changes in scope must follow formal change control procedures
 
 ---
@@ -129,7 +129,7 @@ This Rough Order of Magnitude (ROM) estimate represents a **high-level internal 
 
 ## 10. Approval
 
-Approval of this document authorizes the project to proceed to **Phase 2: Requirement / Planning** of the WAU Bank SDLC.
+Approval of this document authorizes the project to proceed to **Phase 2: Requirement / Planning** of the WAUIG Bank SDLC.
 
 | Name           | Role            | Signature | Date       |
 | -------------- | --------------- | --------- | ---------- |
