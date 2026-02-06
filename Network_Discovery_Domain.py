@@ -46,7 +46,7 @@ from typing import Dict, List, Tuple
 
 # Import core framework primitives.
 # In M5 we will refactor this into a proper package structure.
-from core_framework_v1 import DiscoveryContext, DiscoveryFinding, DiscoveryModule
+from Core_Framework import DiscoveryContext, DiscoveryFinding, DiscoveryModule
 
 
 # =========================
