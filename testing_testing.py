@@ -13,7 +13,7 @@ from Output_Reporting import generate_markdown_report, serialize_run_to_json
 
 def main() -> None:
     # Update target as needed for your lab
-    target_ip = "192.168.145.129"
+    target_ip = input("What is the IP of the device being scanned? ")
 
     ctx = DiscoveryContext(
         target=target_ip,
