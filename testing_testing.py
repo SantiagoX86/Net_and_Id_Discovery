@@ -10,6 +10,12 @@ from Network_Discovery_Domain import NetworkDiscoveryModule
 # NEW: import M3 reporting functions
 from Output_Reporting import generate_markdown_report, serialize_run_to_json
 
+# class FailingModule:
+#     def __init__(self, context):
+#         self.context = context
+#
+#     def execute(self):
+#         raise RuntimeError("Intentional failure for resilience testing")
 
 def main() -> None:
     # Update target as needed for your lab
@@ -48,10 +54,10 @@ def main() -> None:
     print(report_md)
 
     # NEW: Persist artifacts (optional but useful)
-    with open("network_report.md", "w", encoding="utf-8") as f:
+    with open(f"network_report_{str(ctx.run_started_at)[:-10]}.md", "w", encoding="utf-8") as f:
         f.write(report_md)
 
-    with open("run_results.json", "w", encoding="utf-8") as f:
+    with open(f"run_results_{str(ctx.run_started_at)[:-10]}.json", "w", encoding="utf-8") as f:
         json.dump(serialize_run_to_json(run), f, indent=2)
 
     print("\nSaved: network_report.md, run_results.json")
