@@ -45,13 +45,13 @@ def main() -> None:
     run = orchestrator.run(ctx)
 
     # Existing: print findings/events
-    print("=== FINDINGS ===")
+    print("=== FINDINGS (JSON) ===")
     for f in run.findings:
-        print(f.to_dict())
+        print(json.dumps(f.to_dict(), indent=2, sort_keys=True))
 
-    print("=== EVENTS ===")
+    print("=== EVENTS (JSON) ===")
     for e in run.events:
-        print(e.to_dict())
+        print(json.dumps(e.to_dict(), indent=2, sort_keys=True))
 
     # NEW: Generate Markdown report (human-readable)
     report_md = generate_markdown_report(run)
