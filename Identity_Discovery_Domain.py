@@ -14,11 +14,23 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Dict, List
 
+import socket
 
 def _utc_now_iso() -> str:
     """Return UTC timestamp in ISO8601 'Z' format (consistent with existing domains)."""
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
+def _tcp_connect(host: str, port: int, timeout_s: float) -> tuple[bool, str | None]:
+    """
+    Minimal TCP connect check.
+    Returns (is_open, error_string). Never sends protocol data.
+    """
+    try:
+        with socket.create_connection((host, port), timeout=timeout_s):
+            return True, None
+    except (socket.timeout, ConnectionRefusedError, OSError) as e:
+        # timeout -> filtered/unreachable; refused -> closed; OSError -> routing/etc
+        return False, type(e).__name__
 
 class IdentityDiscoveryDomain:
     """
@@ -51,14 +63,52 @@ class IdentityDiscoveryDomain:
         }
 
     def execute(self) -> List[Dict[str, Any]]:
-        """
-        Phase A: structure-only execution.
+        findings: List[Dict[str, Any]] = []
 
-        Returns:
-            Empty list of findings to prove the module can be loaded and executed
-            without introducing regression to frozen M1–M3 behavior.
-        """
-        return []
+        target = getattr(self.context, "target", None)
+        if not target:
+            # No target means we cannot probe; keep behavior safe and deterministic.
+            return findings
+
+        # Phase B1: SMB exposure signal (TCP/445) — connect only, no negotiation/auth.
+        is_open, err = _tcp_connect(target, 445, self.timeout_s)
+
+        if is_open:
+            findings.append(
+                self._make_finding(
+                    category="identity_service_exposed",
+                    target=f"{target}:445",
+                    evidence={
+                        "method": "tcp_connect",
+                        "port": 445,
+                        "service_hint": "SMB",
+                        "note": "Connectivity-only signal; no SMB negotiation or authentication performed.",
+                        "timeout_s": self.timeout_s,
+                    },
+                    confidence=0.7,
+                )
+            )
+        else:
+            # Optional: only record anomalies, not normal closed/filtered states.
+            # Treat OSError as potentially interesting (routing/interface/firewall issues).
+            if err == "OSError":
+                findings.append(
+                    self._make_finding(
+                        category="identity_probe_error",
+                        target=f"{target}:445",
+                        evidence={
+                            "method": "tcp_connect",
+                            "port": 445,
+                            "service_hint": "SMB",
+                            "error": err,
+                            "timeout_s": self.timeout_s,
+                        },
+                        confidence=0.5,
+                    )
+                )
+
+        return findings
+
 
     def _make_finding(
         self,

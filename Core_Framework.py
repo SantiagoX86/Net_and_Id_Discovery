@@ -249,6 +249,29 @@ class DiscoveryOrchestrator:
                 # Execute the module and collect findings.
                 module_findings = module.execute()
 
+                # Normalize findings so downstream layers can treat them consistently.
+                # Some modules may return DiscoveryFinding objects; others may return dicts.
+                normalized: List[DiscoveryFinding] = []
+                for f in module_findings:
+                    if hasattr(f, "to_dict"):
+                        f_copy = dict(f.to_dict())
+                        if isinstance(f_copy.get("observed_at"), str):
+                            ts = f_copy["observed_at"].replace("Z", "+00:00")
+                            f_copy["observed_at"] = datetime.fromisoformat(ts)
+                        normalized.append(DiscoveryFinding(**f_copy))
+                    elif isinstance(f, dict):
+                        # If observed_at is provided as an ISO8601 string, normalize to datetime.
+                        f_copy = dict(f)
+                        if isinstance(f_copy.get("observed_at"), str):
+                            # Accept both "...Z" and "+00:00" formats.
+                            ts = f_copy["observed_at"].replace("Z", "+00:00")
+                            f_copy["observed_at"] = datetime.fromisoformat(ts)
+                        normalized.append(DiscoveryFinding(**f_copy))
+                    else:
+                        raise TypeError(f"Unsupported finding type: {type(f)}")
+                module_findings = normalized
+
+
                 # Enforce contract: module must return a list.
                 if not isinstance(module_findings, list):
                     raise TypeError("execute() must return List[DiscoveryFinding]")
