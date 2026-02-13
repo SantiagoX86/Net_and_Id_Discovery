@@ -1,72 +1,46 @@
 """
 Identity_Discovery_Domain.py
 
-Purpose:
-- Provides the Identity Discovery Domain module scaffold (Milestone M4).
-- Integrates with the existing Core Framework via the established module contract.
-- Keeps M1–M3 behavior unchanged (design-freeze compatible).
+Milestone: M4 – Identity Discovery Domain (Phase A: scaffolding only)
+
+Design intent:
+- Agentless, non-exploitative identity exposure discovery.
+- Integrates with the existing Core Framework module contract.
+- No functional discovery logic in this phase (structure-only).
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
-
-
-# ----------------------------
-# Data model (structure only)
-# ----------------------------
-
-@dataclass(frozen=True)
-class Finding:
-    """
-    Lightweight finding structure matching the existing 'finding schema' pattern used in M1–M3.
-    Keep this aligned with your Core Framework's expected dictionary fields.
-
-    NOTE:
-    If your Core Framework already defines Finding as a dict, you can remove this and
-    return dicts directly instead. This is just a scaffold-friendly placeholder.
-    """
-    domain: str
-    category: str
-    target: str
-    evidence: Dict[str, Any]
-    confidence: float
-    observed_at: str
+from typing import Any, Dict, List
 
 
 def _utc_now_iso() -> str:
-    """Return an ISO8601 UTC timestamp consistent with existing modules."""
+    """Return UTC timestamp in ISO8601 'Z' format (consistent with existing domains)."""
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-# ----------------------------
-# Module (structure only)
-# ----------------------------
-
 class IdentityDiscoveryDomain:
     """
-    Identity Discovery Domain (M4) – Scaffold.
+    Identity Discovery Domain (scaffold).
 
-    Contract expectations (based on your orchestrator behavior):
-    - Must have a `.context` attribute
-    - Must implement `execute(self)` (no args)
-    - Must return a list of findings (dicts or Finding-like objects)
+    Core Framework contract expectations (based on your orchestrator):
+    - Module has a `.context` attribute
+    - Module implements `execute(self)` with no parameters
+    - Module returns a list of finding dictionaries
     """
 
-    # A human-readable module name used for events/logging (optional, but helpful).
     name: str = "IdentityDiscoveryDomain"
 
     def __init__(self, context: Any, *, timeout_s: float = 1.0) -> None:
-        # Context is owned by the orchestrator and shared across modules.
+        # Orchestrator-owned shared context for this run.
         self.context = context
 
-        # Keep configurable settings on the module for later controlled expansion.
+        # Timeout used later for controlled, low-noise protocol checks.
         self.timeout_s = timeout_s
 
-        # Placeholder: protocols/services this domain may consider later.
-        # (No probing logic is implemented in the scaffold.)
+        # Placeholder: identity-adjacent service ports we may evaluate in later phases.
+        # (No network interaction is performed in Phase A.)
         self.identity_service_ports: Dict[int, str] = {
             88: "Kerberos",
             389: "LDAP",
@@ -78,21 +52,14 @@ class IdentityDiscoveryDomain:
 
     def execute(self) -> List[Dict[str, Any]]:
         """
-        Structure-only execution.
-        Returns an empty set of identity findings for now, but proves:
-        - the module loads
-        - the contract is satisfied
-        - the orchestrator can execute it without regression
+        Phase A: structure-only execution.
+
+        Returns:
+            Empty list of findings to prove the module can be loaded and executed
+            without introducing regression to frozen M1–M3 behavior.
         """
-        # In later phases, we will add minimal, handshake-level checks here.
-        findings: List[Dict[str, Any]] = []
+        return []
 
-        # OPTIONAL: You may want a 'module_loaded'/'module_ran' event pattern,
-        # but only if your Core Framework supports module-emitted events.
-        # For now, return empty findings to avoid changing behavior.
-        return findings
-
-    # Optional helper: create a consistent finding dict (kept for later phases).
     def _make_finding(
         self,
         *,
@@ -101,6 +68,10 @@ class IdentityDiscoveryDomain:
         evidence: Dict[str, Any],
         confidence: float,
     ) -> Dict[str, Any]:
+        """
+        Helper to keep finding shape consistent across domains.
+        (Not used in Phase A, but included now to avoid refactoring later.)
+        """
         return {
             "domain": "identity",
             "category": category,

@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 
 from Core_Framework import DiscoveryContext, DiscoveryOrchestrator
 from Network_Discovery_Domain import NetworkDiscoveryModule
+from Identity_Discovery_Domain import IdentityDiscoveryDomain
 
 # NEW: import M3 reporting functions
 from Output_Reporting import generate_markdown_report, serialize_run_to_json
@@ -34,7 +35,12 @@ def main() -> None:
     )
 
     network = NetworkDiscoveryModule(ctx)
-    orchestrator = DiscoveryOrchestrator([network])
+    identity = IdentityDiscoveryDomain(ctx)
+
+    orchestrator = DiscoveryOrchestrator([
+        network,
+        identity
+    ])
 
     run = orchestrator.run(ctx)
 
