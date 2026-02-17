@@ -107,6 +107,42 @@ class IdentityDiscoveryDomain:
                     )
                 )
 
+        # Phase B2: WinRM exposure signal (TCP/5985) — connect only, no auth/HTTP requests.
+        is_open, err = _tcp_connect(target, 5985, self.timeout_s)
+
+        if is_open:
+            findings.append(
+                self._make_finding(
+                    category="identity_service_exposed",
+                    target=f"{target}:5985",
+                    evidence={
+                        "method": "tcp_connect",
+                        "port": 5985,
+                        "service_hint": "WinRM",
+                        "note": "Connectivity-only signal; no WinRM HTTP request or authentication performed.",
+                        "timeout_s": self.timeout_s,
+                    },
+                    confidence=0.7,
+                )
+            )
+        else:
+            # Optional: only record anomalies, not normal closed/filtered states.
+            if err == "OSError":
+                findings.append(
+                    self._make_finding(
+                        category="identity_probe_error",
+                        target=f"{target}:5985",
+                        evidence={
+                            "method": "tcp_connect",
+                            "port": 5985,
+                            "service_hint": "WinRM",
+                            "error": err,
+                            "timeout_s": self.timeout_s,
+                        },
+                        confidence=0.5,
+                    )
+                )
+
         return findings
 
 
