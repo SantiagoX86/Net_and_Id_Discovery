@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 
 from Core_Framework import DiscoveryContext, DiscoveryOrchestrator
 from Network_Discovery_Domain import NetworkDiscoveryModule
+from Identity_Discovery_Domain import IdentityDiscoveryDomain
 
 # NEW: import M3 reporting functions
 from Output_Reporting import generate_markdown_report, serialize_run_to_json
@@ -34,18 +35,23 @@ def main() -> None:
     )
 
     network = NetworkDiscoveryModule(ctx)
-    orchestrator = DiscoveryOrchestrator([network])
+    identity = IdentityDiscoveryDomain(ctx)
+
+    orchestrator = DiscoveryOrchestrator([
+        network,
+        identity
+    ])
 
     run = orchestrator.run(ctx)
 
     # Existing: print findings/events
-    print("=== FINDINGS ===")
+    print("=== FINDINGS (JSON) ===")
     for f in run.findings:
-        print(f.to_dict())
+        print(json.dumps(f.to_dict(), indent=2, sort_keys=True))
 
-    print("=== EVENTS ===")
+    print("=== EVENTS (JSON) ===")
     for e in run.events:
-        print(e.to_dict())
+        print(json.dumps(e.to_dict(), indent=2, sort_keys=True))
 
     # NEW: Generate Markdown report (human-readable)
     report_md = generate_markdown_report(run)
