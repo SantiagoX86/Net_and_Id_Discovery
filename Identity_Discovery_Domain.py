@@ -55,6 +55,7 @@ class IdentityDiscoveryDomain(DiscoveryModule):
         # Identity-adjacent ports (deterministic ordering enforced at probe-time).
         self.identity_service_ports: Dict[int, str] = {
             88: "Kerberos",
+            135: "RPC",
             389: "LDAP",
             636: "LDAPS",
             445: "SMB",
@@ -63,7 +64,7 @@ class IdentityDiscoveryDomain(DiscoveryModule):
         }
 
         # M4 validated probes (explicit order; deterministic).
-        self._probe_order: List[int] = [445, 5985]
+        self._probe_order: List[int] = [445, 5985, 135]
 
     def execute(self) -> List[DiscoveryFinding]:
         findings: List[DiscoveryFinding] = []
@@ -77,12 +78,14 @@ class IdentityDiscoveryDomain(DiscoveryModule):
             is_open, err = _tcp_connect(target, port, self.timeout_s)
 
             if is_open:
-                note = (
-                    "Connectivity-only signal; no SMB negotiation or authentication performed."
-                    if port == 445
-                    else "Connectivity-only signal; no WinRM HTTP request or authentication performed."
-                    if port == 5985
-                    else "Connectivity-only signal; no protocol negotiation or authentication performed."
+                note_map = {
+                    445: "Connectivity-only signal; no SMB negotiation or authentication performed.",
+                    5985: "Connectivity-only signal; no WinRM HTTP request or authentication performed.",
+                    135: "Connectivity-only signal; no RPC endpoint enumeration performed (no EPM queries).",
+                }
+                note = note_map.get(
+                    port,
+                    "Connectivity-only signal; no protocol negotiation or authentication performed.",
                 )
 
                 findings.append(
