@@ -13,3 +13,5 @@ venv/
 run_results*.json
 network_report*.md
 *.log
+# Ignore local templates / scratch
+Template.md
