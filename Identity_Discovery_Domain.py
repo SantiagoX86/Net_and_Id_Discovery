@@ -64,7 +64,7 @@ class IdentityDiscoveryDomain(DiscoveryModule):
         }
 
         # M4 validated probes (explicit order; deterministic).
-        self._probe_order: List[int] = [445, 5985, 135, 389, 636, 88]
+        self._probe_order: List[int] = [445, 5985, 5986, 135, 389, 636, 88]
 
     def execute(self) -> List[DiscoveryFinding]:
         findings: List[DiscoveryFinding] = []
@@ -81,6 +81,7 @@ class IdentityDiscoveryDomain(DiscoveryModule):
                 note_map = {
                     445: "Connectivity-only signal; no SMB negotiation or authentication performed.",
                     5985: "Connectivity-only signal; no WinRM HTTP request or authentication performed.",
+                    5986: "Connectivity-only signal; no WinRM HTTPS request, TLS negotiation, or authentication performed.",
                     135: "Connectivity-only signal; no RPC endpoint enumeration performed (no EPM queries).",
                     389: "Connectivity-only signal; no LDAP bind, negotiation, or authentication performed.",
                     636: "Connectivity-only signal; no TLS negotiation or LDAP bind performed.",
