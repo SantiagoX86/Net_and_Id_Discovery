@@ -62,10 +62,11 @@ class IdentityDiscoveryDomain(DiscoveryModule):
             5985: "WinRM",
             5986: "WinRM-HTTPS",
             3389: "RDP",
+            139: "NetBIOS-SSN",
         }
 
         # M4 validated probes (explicit order; deterministic).
-        self._probe_order: List[int] = [445, 5985, 5986, 135, 389, 636, 88, 3389]
+        self._probe_order: List[int] = [445, 139, 5985, 5986, 135, 389, 636, 88, 3389]
 
     def execute(self) -> List[DiscoveryFinding]:
         findings: List[DiscoveryFinding] = []
@@ -88,6 +89,7 @@ class IdentityDiscoveryDomain(DiscoveryModule):
                     636: "Connectivity-only signal; no TLS negotiation or LDAP bind performed.",
                     88: "Connectivity-only signal; no Kerberos exchange or authentication performed.",
                     3389: "Connectivity-only signal; no RDP negotiation or authentication performed.",
+                    139: "Connectivity-only signal; no NetBIOS session negotiation or authentication performed.",
                 }
                 note = note_map.get(
                     port,
