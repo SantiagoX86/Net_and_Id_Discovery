@@ -15,3 +15,5 @@ network_report*.md
 *.log
 # Ignore local templates / scratch
 Template.md
+discovery_report.md
+discovery_run.json
