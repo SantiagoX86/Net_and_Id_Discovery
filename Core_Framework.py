@@ -35,7 +35,7 @@ from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 
 # Typing clarifies contracts and improves maintainability.
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 
 # =========================
@@ -143,8 +143,18 @@ class DiscoveryModule(ABC):
         self.context = context
 
     @abstractmethod
-    def execute(self) -> List[DiscoveryFinding]:
-        """Run domain discovery logic and return a list of normalized findings."""
+    def execute(
+            self,
+            prior_findings: Tuple[DiscoveryFinding, ...] = (),
+    ) -> List[DiscoveryFinding]:
+        """
+        Run domain discovery logic and return a list of normalized findings.
+
+        prior_findings:
+        - Explicit, read-only tuple of findings produced by earlier modules
+          in deterministic orchestrator order.
+        - Modules that do not require upstream findings may ignore this input.
+        """
         raise NotImplementedError
 
 
@@ -247,7 +257,7 @@ class DiscoveryOrchestrator:
 
             try:
                 # Execute the module and collect findings.
-                module_findings = module.execute()
+                module_findings = module.execute(prior_findings=tuple(findings))
 
                 # Normalize findings so downstream layers can treat them consistently.
                 # Some modules may return DiscoveryFinding objects; others may return dicts.

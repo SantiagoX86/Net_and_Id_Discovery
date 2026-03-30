@@ -68,7 +68,10 @@ class IdentityDiscoveryDomain(DiscoveryModule):
         # M4 validated probes (explicit order; deterministic).
         self._probe_order: List[int] = [88, 135, 139, 389, 445, 636, 3389, 5985, 5986]
 
-    def execute(self) -> List[DiscoveryFinding]:
+    def execute(
+            self,
+            prior_findings: tuple[DiscoveryFinding, ...] = (),
+            ) -> List[DiscoveryFinding]:
         findings: List[DiscoveryFinding] = []
 
         target = getattr(self.context, "target", None)
