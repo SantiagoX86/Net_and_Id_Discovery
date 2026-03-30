@@ -127,7 +127,10 @@ class NetworkDiscoveryModule(DiscoveryModule):
         self.tcp_timeout_s = tcp_timeout_s
         self.ping_timeout_s = ping_timeout_s
 
-    def execute(self) -> List[DiscoveryFinding]:
+    def execute(
+            self,
+            prior_findings: tuple[DiscoveryFinding, ...] = (),
+            ) -> List[DiscoveryFinding]:
         """
         Execute network discovery tasks and return normalized findings.
 
