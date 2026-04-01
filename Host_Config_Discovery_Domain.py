@@ -134,8 +134,62 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         self,
         prior_findings: Tuple[DiscoveryFinding, ...],
     ) -> DiscoveryFinding | None:
-        """HC-RM-001: Remote Management Exposure (WinRM / WinRM-HTTPS)."""
-        return None  # No inference logic yet
+        """
+        HC-RM-001: Remote Management Exposure (WinRM / WinRM-HTTPS).
+
+        Trigger:
+        - One or more prior identity findings exist where:
+          - domain == "identity"
+          - category == "identity_service_exposed"
+          - evidence.service_hint is "WinRM" or "WinRM-HTTPS"
+
+        Output:
+        - category = "remote_management_exposure"
+        - confidence = 0.85
+        - target = host-only target from context
+        """
+
+        # Define the exact allowed upstream service hints for this rule.
+        # This is fixed and deterministic per the specification.
+        allowed_service_hints = {"WinRM", "WinRM-HTTPS"}
+
+        # Collect only qualifying upstream findings for this rule.
+        # We preserve upstream order and do not mutate the input data.
+        matching_findings: List[DiscoveryFinding] = []
+
+        for finding in prior_findings:
+            # Rule applies only to Identity domain findings.
+            if finding.domain != "identity":
+                continue
+
+            # Rule applies only to identity exposure findings.
+            if finding.category != "identity_service_exposed":
+                continue
+
+            # Extract service hint from the evidence structure.
+            service_hint = finding.evidence.get("service_hint")
+
+            # Keep only WinRM / WinRM-HTTPS exposure findings.
+            if service_hint in allowed_service_hints:
+                matching_findings.append(finding)
+
+        # If no qualifying findings exist, this rule emits nothing.
+        if not matching_findings:
+            return None
+
+        # Build deterministic evidence structure required by the spec.
+        evidence = self._build_evidence(
+            rule_id="HC-RM-001",
+            source_findings=matching_findings,
+            rationale="Host exposes remote management capability via WinRM-related service exposure",
+        )
+
+        # Emit exactly one derived finding for this rule and target.
+        return self._make_finding(
+            category="remote_management_exposure",
+            evidence=evidence,
+            confidence=0.85,
+        )
 
     def _rule_hc_rm_002(
         self,
