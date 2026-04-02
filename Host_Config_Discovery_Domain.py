@@ -255,8 +255,62 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         self,
         prior_findings: Tuple[DiscoveryFinding, ...],
     ) -> DiscoveryFinding | None:
-        """HC-DS-001: Directory Service Exposure."""
-        return None
+        """
+        HC-DS-001: Directory Service Exposure.
+
+        Trigger:
+        - One or more prior identity findings exist where:
+          - domain == "identity"
+          - category == "identity_service_exposed"
+          - evidence.service_hint is "LDAP", "LDAPS", or "Kerberos"
+
+        Output:
+        - category = "directory_service_exposure"
+        - confidence = 0.90
+        - target = host-only target from context
+        """
+
+        # Define the exact allowed upstream service hints for this rule.
+        # This is fixed and deterministic per the specification.
+        allowed_service_hints = {"LDAP", "LDAPS", "Kerberos"}
+
+        # Collect only qualifying upstream findings for this rule.
+        # Preserve upstream ordering and do not mutate input.
+        matching_findings: List[DiscoveryFinding] = []
+
+        for finding in prior_findings:
+            # Rule applies only to Identity domain findings.
+            if finding.domain != "identity":
+                continue
+
+            # Rule applies only to identity exposure findings.
+            if finding.category != "identity_service_exposed":
+                continue
+
+            # Extract service hint from the evidence structure.
+            service_hint = finding.evidence.get("service_hint")
+
+            # Keep only directory-service exposure findings.
+            if service_hint in allowed_service_hints:
+                matching_findings.append(finding)
+
+        # If no qualifying findings exist, this rule emits nothing.
+        if not matching_findings:
+            return None
+
+        # Build deterministic evidence structure required by the spec.
+        evidence = self._build_evidence(
+            rule_id="HC-DS-001",
+            source_findings=matching_findings,
+            rationale="Host presents directory-service-related exposure signals",
+        )
+
+        # Emit exactly one derived finding for this rule and target.
+        return self._make_finding(
+            category="directory_service_exposure",
+            evidence=evidence,
+            confidence=0.90,
+        )
 
     def _rule_hc_smb_001(
         self,
