@@ -195,8 +195,61 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         self,
         prior_findings: Tuple[DiscoveryFinding, ...],
     ) -> DiscoveryFinding | None:
-        """HC-RM-002: Remote Management Exposure (RDP)."""
-        return None
+        """
+        HC-RM-002: Remote Management Exposure (RDP).
+
+        Trigger:
+        - One or more prior identity findings exist where:
+          - domain == "identity"
+          - category == "identity_service_exposed"
+          - evidence.service_hint is "RDP"
+
+        Output:
+        - category = "remote_management_exposure"
+        - confidence = 0.85
+        - target = host-only target from context
+        """
+
+        # Define the exact allowed upstream service hint for this rule.
+        allowed_service_hint = "RDP"
+
+        # Collect only qualifying upstream findings for this rule.
+        # Preserve upstream ordering and do not mutate input.
+        matching_findings: List[DiscoveryFinding] = []
+
+        for finding in prior_findings:
+            # Rule applies only to Identity domain findings.
+            if finding.domain != "identity":
+                continue
+
+            # Rule applies only to identity exposure findings.
+            if finding.category != "identity_service_exposed":
+                continue
+
+            # Extract service hint from the evidence structure.
+            service_hint = finding.evidence.get("service_hint")
+
+            # Keep only RDP exposure findings.
+            if service_hint == allowed_service_hint:
+                matching_findings.append(finding)
+
+        # If no qualifying findings exist, this rule emits nothing.
+        if not matching_findings:
+            return None
+
+        # Build deterministic evidence structure required by the spec.
+        evidence = self._build_evidence(
+            rule_id="HC-RM-002",
+            source_findings=matching_findings,
+            rationale="Host exposes remote desktop capability",
+        )
+
+        # Emit exactly one derived finding for this rule and target.
+        return self._make_finding(
+            category="remote_management_exposure",
+            evidence=evidence,
+            confidence=0.85,
+        )
 
     def _rule_hc_ds_001(
         self,
