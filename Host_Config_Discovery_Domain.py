@@ -373,11 +373,51 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         )
 
     def _rule_hc_rpc_001(
-        self,
-        prior_findings: Tuple[DiscoveryFinding, ...],
+            self,
+            prior_findings: Tuple[DiscoveryFinding, ...],
     ) -> DiscoveryFinding | None:
-        """HC-RPC-001: RPC Exposure Indicator."""
-        return None
+        """
+        HC-RPC-001: RPC Exposure Indicator.
+
+        Trigger:
+        - One or more prior identity findings exist where:
+          - domain == "identity"
+          - category == "identity_service_exposed"
+          - evidence.service_hint == "RPC"
+
+        Output:
+        - category = "rpc_exposure_indicator"
+        - confidence = 0.75
+        """
+
+        matching_findings: List[DiscoveryFinding] = []
+
+        for finding in prior_findings:
+            if finding.domain != "identity":
+                continue
+
+            if finding.category != "identity_service_exposed":
+                continue
+
+            service_hint = finding.evidence.get("service_hint")
+
+            if service_hint == "RPC":
+                matching_findings.append(finding)
+
+        if not matching_findings:
+            return None
+
+        evidence = self._build_evidence(
+            rule_id="HC-RPC-001",
+            source_findings=matching_findings,
+            rationale="Host exposes RPC endpoint mapper service",
+        )
+
+        return self._make_finding(
+            category="rpc_exposure_indicator",
+            evidence=evidence,
+            confidence=0.75,
+        )
 
     def _rule_hc_net_001(
         self,
