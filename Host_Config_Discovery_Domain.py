@@ -490,8 +490,61 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         self,
         prior_findings: Tuple[DiscoveryFinding, ...],
     ) -> DiscoveryFinding | None:
-        """HC-NET-002: Reachable Host Without Identity Exposure."""
-        return None
+        """
+        HC-NET-002: Reachable Host Without Identity Exposure.
+
+        Trigger:
+        - One or more prior network findings exist where:
+          - domain == "network"
+          - category == "host_presence"
+          - evidence.reachable is True
+        - AND no prior identity findings exist where:
+          - domain == "identity"
+          - category == "identity_service_exposed"
+
+        Output:
+        - category = "reachable_host_without_identity_exposure"
+        - confidence = 0.55
+        - target = host-only target from context
+        """
+
+        # Collect host reachability findings that explicitly indicate reachable == True.
+        matching_network_findings: List[DiscoveryFinding] = []
+
+        for finding in prior_findings:
+            if finding.domain != "network":
+                continue
+            if finding.category != "host_presence":
+                continue
+            if finding.evidence.get("reachable") is not True:
+                continue
+            matching_network_findings.append(finding)
+
+        # If the host is not reachable, this rule emits nothing.
+        if not matching_network_findings:
+            return None
+
+        # If any identity exposure exists, this rule must not fire.
+        for finding in prior_findings:
+            if finding.domain != "identity":
+                continue
+            if finding.category != "identity_service_exposed":
+                continue
+            return None
+
+        # Build deterministic evidence structure required by the spec.
+        evidence = self._build_evidence(
+            rule_id="HC-NET-002",
+            source_findings=matching_network_findings,
+            rationale="Host is reachable from the discovery vantage point, but no identity-related service exposure was observed",
+        )
+
+        # Emit exactly one derived finding for this rule and target.
+        return self._make_finding(
+            category="reachable_host_without_identity_exposure",
+            evidence=evidence,
+            confidence=0.55,
+        )
 
     # ------------------------------------------------------------------
     # Deterministic helper methods (used in Phase B)
