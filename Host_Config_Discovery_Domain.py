@@ -423,8 +423,68 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         self,
         prior_findings: Tuple[DiscoveryFinding, ...],
     ) -> DiscoveryFinding | None:
-        """HC-NET-001: Unclassified Network Service Exposure."""
-        return None
+        """
+        HC-NET-001: Unclassified Network Service Exposure.
+
+        Trigger:
+        - One or more prior network findings exist where:
+          - domain == "network"
+          - category == "open_port"
+        - AND no prior identity findings exist where:
+          - domain == "identity"
+          - category == "identity_service_exposed"
+          - target matches the same port-qualified target as the network finding
+
+        Output:
+        - category = "unclassified_network_service_exposure"
+        - confidence = 0.60
+        - target = host-only target from context
+        """
+
+        # Collect all network open_port findings in upstream order.
+        network_open_ports: List[DiscoveryFinding] = []
+
+        for finding in prior_findings:
+            if finding.domain != "network":
+                continue
+            if finding.category != "open_port":
+                continue
+            network_open_ports.append(finding)
+
+        # Collect the full set of port-qualified targets already classified by Identity.
+        classified_identity_targets = {
+            finding.target
+            for finding in prior_findings
+            if finding.domain == "identity"
+            and finding.category == "identity_service_exposed"
+        }
+
+        # Keep only network open ports that were not classified by Identity
+        # for the same exact port-qualified target.
+        matching_findings: List[DiscoveryFinding] = []
+
+        for finding in network_open_ports:
+            if finding.target in classified_identity_targets:
+                continue
+            matching_findings.append(finding)
+
+        # If no qualifying findings exist, this rule emits nothing.
+        if not matching_findings:
+            return None
+
+        # Build deterministic evidence structure required by the spec.
+        evidence = self._build_evidence(
+            rule_id="HC-NET-001",
+            source_findings=matching_findings,
+            rationale="Host exposes a reachable network service that is not classified by the current Identity Discovery rule set",
+        )
+
+        # Emit exactly one derived finding for this rule and target.
+        return self._make_finding(
+            category="unclassified_network_service_exposure",
+            evidence=evidence,
+            confidence=0.60,
+        )
 
     def _rule_hc_net_002(
         self,
