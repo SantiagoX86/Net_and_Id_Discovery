@@ -51,7 +51,8 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         "HC-SMB-001",  # SMB Exposure Posture
         "HC-RPC-001",  # RPC Exposure Indicator
         "HC-NET-001",  # Unclassified Network Service Exposure
-        "HC-NET-002",  # Reachable Host Without Identity Exposure
+        "HC-NET-002",  # ICMP Reachable Host Without Identity Exposure
+        "HC-NET-003",  # TCP Reachable Host Without Identity Exposure
     )
 
     def __init__(self, context: DiscoveryContext) -> None:
@@ -118,6 +119,7 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
             "HC-RPC-001": self._rule_hc_rpc_001,
             "HC-NET-001": self._rule_hc_net_001,
             "HC-NET-002": self._rule_hc_net_002,
+            "HC-NET-003": self._rule_hc_net_003,
         }
 
         # Select the correct rule handler
@@ -491,7 +493,7 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         prior_findings: Tuple[DiscoveryFinding, ...],
     ) -> DiscoveryFinding | None:
         """
-        HC-NET-002: Reachable Host Without Identity Exposure.
+        HC-NET-002: ICMP Reachable Host Without Identity Exposure.
 
         Trigger:
         - One or more prior network findings exist where:
@@ -503,12 +505,18 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
           - category == "identity_service_exposed"
 
         Output:
-        - category = "reachable_host_without_identity_exposure"
+        - category = "icmp_reachable_host_without_identity_exposure"
         - confidence = 0.55
         - target = host-only target from context
+
+        Constraints:
+        - This rule is ICMP-specific only
+        - TCP findings MUST NOT be used to satisfy this rule
+        - This rule MUST NOT be interpreted as a statement of general host reachability
         """
 
-        # Collect host reachability findings that explicitly indicate reachable == True.
+        # Collect ICMP host presence findings that explicitly indicate reachable == True.
+        # This rule is strictly limited to ICMP-based evidence.
         matching_network_findings: List[DiscoveryFinding] = []
 
         for finding in prior_findings:
@@ -520,7 +528,7 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
                 continue
             matching_network_findings.append(finding)
 
-        # If the host is not reachable, this rule emits nothing.
+        # If no qualifying ICMP reachability findings exist, this rule emits nothing.
         if not matching_network_findings:
             return None
 
@@ -536,12 +544,76 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         evidence = self._build_evidence(
             rule_id="HC-NET-002",
             source_findings=matching_network_findings,
-            rationale="Host is reachable from the discovery vantage point, but no identity-related service exposure was observed",
+            rationale="Host responds to ICMP echo from the discovery vantage point, but no identity-related service exposure was observed",
         )
 
         # Emit exactly one derived finding for this rule and target.
         return self._make_finding(
-            category="reachable_host_without_identity_exposure",
+            category="icmp_reachable_host_without_identity_exposure",
+            evidence=evidence,
+            confidence=0.55,
+        )
+
+    def _rule_hc_net_003(
+        self,
+        prior_findings: Tuple[DiscoveryFinding, ...],
+    ) -> DiscoveryFinding | None:
+        """
+        HC-NET-003: TCP Reachable Host Without Identity Exposure.
+
+        Trigger:
+        - One or more prior network findings exist where:
+          - domain == "network"
+          - category == "open_port"
+        - AND no prior identity findings exist where:
+          - domain == "identity"
+          - category == "identity_service_exposed"
+
+        Output:
+        - category = "tcp_reachable_host_without_identity_exposure"
+        - confidence = 0.55
+        - target = host-only target from context
+
+        Constraints:
+        - This rule is TCP-specific only
+        - ICMP findings MUST NOT be used to satisfy this rule
+        - TCP reachability in this rule is an inference-only concept derived from observed service exposure
+        - This rule MUST NOT be interpreted as a statement about unobserved ports or general host availability
+        """
+
+        # Collect network open_port findings that indicate TCP-reachable service exposure.
+        # This rule is strictly limited to TCP-based evidence.
+        matching_network_findings: List[DiscoveryFinding] = []
+
+        for finding in prior_findings:
+            if finding.domain != "network":
+                continue
+            if finding.category != "open_port":
+                continue
+            matching_network_findings.append(finding)
+
+        # If no qualifying TCP service exposure findings exist, this rule emits nothing.
+        if not matching_network_findings:
+            return None
+
+        # If any identity exposure exists, this rule must not fire.
+        for finding in prior_findings:
+            if finding.domain != "identity":
+                continue
+            if finding.category != "identity_service_exposed":
+                continue
+            return None
+
+        # Build deterministic evidence structure required by the spec.
+        evidence = self._build_evidence(
+            rule_id="HC-NET-003",
+            source_findings=matching_network_findings,
+            rationale="Host exposes one or more TCP-reachable services from the discovery vantage point, but no identity-related service exposure was observed",
+        )
+
+        # Emit exactly one derived finding for this rule and target.
+        return self._make_finding(
+            category="tcp_reachable_host_without_identity_exposure",
             evidence=evidence,
             confidence=0.55,
         )
