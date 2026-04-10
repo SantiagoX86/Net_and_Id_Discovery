@@ -69,7 +69,7 @@ def default_port_map() -> Dict[int, str]:
         80: "HTTP",
         88: "Kerberos",
         135: "RPC",
-        139: "SMB",
+        139: "NetBIOS-SSN",
         389: "LDAP",
         443: "HTTPS",
         445: "SMB",
