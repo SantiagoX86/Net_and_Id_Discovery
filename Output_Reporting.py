@@ -101,7 +101,7 @@ def generate_markdown_report(run: DiscoveryRunResult) -> str:
     # Header Section
     # -------------------------
 
-    lines.append("# Network Discovery Report")
+    lines.append("# Discovery Report")
     lines.append("")
 
     lines.append(f"**Target:** `{run.context.target}`")
@@ -162,17 +162,17 @@ def generate_markdown_report(run: DiscoveryRunResult) -> str:
 
     if open_ports:
         lines.append(
-            "- One or more network services are externally reachable from this vantage point."
+            "- One or more externally reachable services were observed from this vantage point."
         )
         lines.append(
-            "- Exposure is dependent on host firewall and network profile configuration."
+            "- Observed exposure is dependent on host firewall and network profile configuration."
         )
     else:
         lines.append(
-            "- No network services were observed as externally reachable during this run."
+            "- No externally reachable services were observed during this run."
         )
         lines.append(
-            "- This may indicate a hardened firewall posture or disabled services."
+            "- This may indicate a hardened firewall posture, disabled services, or limited externally observable exposure."
         )
 
     lines.append("")
