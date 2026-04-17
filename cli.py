@@ -27,6 +27,8 @@ from Core_Framework import DiscoveryContext, DiscoveryOrchestrator
 # Import the existing validated discovery domains
 from Network_Discovery_Domain import NetworkDiscoveryModule
 from Identity_Discovery_Domain import IdentityDiscoveryDomain
+from Application_Service_Discovery_Domain import ApplicationServiceDiscoveryDomain
+
 
 # Import the new M6 Host Configuration inference-only domain
 # This is the only new import required for M6 registration
@@ -174,6 +176,11 @@ def main() -> None:
     # This remains downstream of Network so it can run in the established sequence
     identity = IdentityDiscoveryDomain(ctx)
 
+    # Instantiate the Application / Service Discovery domain
+    # This is the new M7 discovery-only producer for bounded application/service exposure
+    # It executes after Identity and before Host Configuration
+    application_service = ApplicationServiceDiscoveryDomain(ctx)
+
     # Instantiate the Host Configuration Discovery domain
     # This is the new M6 module and is inference-only
     # It must execute after Network and Identity so it can consume prior findings
@@ -184,6 +191,7 @@ def main() -> None:
     orchestrator = DiscoveryOrchestrator([
         network,       # First: network findings
         identity,      # Second: identity findings
+        application_service,   # Third: application/service discovery findings
         host_config,   # Third: inference-only host configuration findings
     ])
 
