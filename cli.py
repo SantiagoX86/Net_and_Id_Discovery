@@ -2,14 +2,14 @@
 # cli.py
 #
 # Milestone: M5 – Entry / Control Layer (CLI)
-# Updated for M6 registration only
-#
+# Updated for M6 and M7 registration changes only
+# #
 # Design intent:
 # - Thin control-layer entry point only
 # - No discovery business logic
 # - No authentication, negotiation, or exploitative behavior
 # - Deterministic execution across all domains
-# - M6 addition is limited to module registration only
+# - M6 and M7 additions are limited to module registration only
 # ---------------------------------------------------------------------
 
 from __future__ import annotations  # Enables forward-reference-friendly type hint behavior
@@ -28,10 +28,11 @@ from Core_Framework import DiscoveryContext, DiscoveryOrchestrator
 from Network_Discovery_Domain import NetworkDiscoveryModule
 from Identity_Discovery_Domain import IdentityDiscoveryDomain
 from Application_Service_Discovery_Domain import ApplicationServiceDiscoveryDomain
+from Telemetry_Logging_Exposure_Discovery_Domain import TelemetryLoggingExposureDiscoveryDomain
 
 
-# Import the new M6 Host Configuration inference-only domain
-# This is the only new import required for M6 registration
+# Import the existing M6 Host Configuration inference-only domain
+# This import is preserved as part of the controlled module registration set
 from Host_Config_Discovery_Domain import HostConfigDiscoveryDomain
 
 # Import the existing validated output/reporting functions
@@ -181,18 +182,24 @@ def main() -> None:
     # It executes after Identity and before Host Configuration
     application_service = ApplicationServiceDiscoveryDomain(ctx)
 
+    # Instantiate the Telemetry / Logging Exposure Discovery domain
+    # This discovery-only producer executes after Application / Service
+    # and before Host Configuration in the approved deterministic order
+    telemetry_logging = TelemetryLoggingExposureDiscoveryDomain(ctx)
+
     # Instantiate the Host Configuration Discovery domain
-    # This is the new M6 module and is inference-only
-    # It must execute after Network and Identity so it can consume prior findings
+    # This is the inference-only downstream consumer domain
+    # It must execute after all discovery producers so it can consume prior findings
     host_config = HostConfigDiscoveryDomain(ctx)
 
     # Build the orchestrator with modules in strict deterministic order
-    # M6 is added only as a registration change; no control logic is altered
+    # M6 and M7 additions are registration-only changes; no control logic is altered
     orchestrator = DiscoveryOrchestrator([
         network,       # First: network findings
         identity,      # Second: identity findings
-        application_service,   # Third: application/service discovery findings
-        host_config,   # Third: inference-only host configuration findings
+        application_service,  # Third: application/service discovery findings
+        telemetry_logging,  # Fourth: telemetry/logging discovery findings
+        host_config,  # Fifth: inference-only host configuration findings
     ])
 
     # Execute the orchestrated discovery run using the shared context
