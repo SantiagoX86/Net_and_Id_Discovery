@@ -2,12 +2,19 @@
 # Host_Config_Discovery_Domain.py
 #
 # Milestone: M6 – Host Configuration Discovery Domain (Inference-Only)
+# Updated under controlled M7 Host consuming-contract expansion
 #
 # This module implements an inference-only discovery domain that:
 # - Consumes prior findings from the orchestrator (read-only)
 # - Produces new DiscoveryFinding objects (append-only)
 # - Performs NO network interaction
 # - Enforces deterministic, rule-based execution
+# - Consumes only explicitly authorized upstream findings and governed
+#   evidence fields from:
+#   - Network Discovery
+#   - Identity Discovery
+#   - Application / Service Discovery
+#   - Telemetry / Logging Exposure Discovery
 # ---------------------------------------------------------------------
 
 from __future__ import annotations  # Enables forward references in type hints (Python <3.10 compatibility)
@@ -32,9 +39,15 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
     Host Configuration Discovery Domain (M6).
 
     Responsibilities:
-    - Consume prior findings from Network + Identity domains
-    - Apply deterministic inference rules
+    - Consume prior findings from authorized upstream discovery domains:
+      Network, Identity, Application / Service, and Telemetry / Logging
+    - Apply deterministic, specification-defined inference rules
     - Emit new findings WITHOUT modifying upstream data
+
+    Constraints:
+    - Read-only, append-only upstream handling only
+    - No direct network interaction
+    - No probing, protocol interaction, or discovery behavior
     """
 
     # Domain name used in all output findings
@@ -50,6 +63,8 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         "HC-DS-001",   # Directory Service Exposure
         "HC-SMB-001",  # SMB Exposure Posture
         "HC-RPC-001",  # RPC Exposure Indicator
+        "HC-AS-001",   # Application / Service Interface Exposure
+        "HC-TL-001",   # Telemetry / Logging Interface Exposure
         "HC-NET-001",  # Unclassified Network Service Exposure
         "HC-NET-002",  # ICMP Reachable Host Without Identity Exposure
         "HC-NET-003",  # TCP Reachable Host Without Identity Exposure
@@ -74,9 +89,10 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         Outputs:
         - List of newly derived DiscoveryFinding objects
 
-        Phase A behavior:
+        Current behavior:
         - Evaluate rules in fixed order
-        - Currently emits no findings (rule logic not yet implemented)
+        - Consume upstream findings as an immutable local tuple
+        - Emit only newly derived findings produced by matching rules
         """
 
         findings: List[DiscoveryFinding] = []  # Initialize output list
@@ -117,6 +133,8 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
             "HC-DS-001": self._rule_hc_ds_001,
             "HC-SMB-001": self._rule_hc_smb_001,
             "HC-RPC-001": self._rule_hc_rpc_001,
+            "HC-AS-001": self._rule_hc_as_001,
+            "HC-TL-001": self._rule_hc_tl_001,
             "HC-NET-001": self._rule_hc_net_001,
             "HC-NET-002": self._rule_hc_net_002,
             "HC-NET-003": self._rule_hc_net_003,
@@ -129,7 +147,7 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         return handler(prior_findings)
 
     # ------------------------------------------------------------------
-    # Phase B rule stubs (NO LOGIC YET — intentional)
+    # Deterministic inference rules
     # ------------------------------------------------------------------
 
     def _rule_hc_rm_001(
@@ -421,6 +439,144 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
             confidence=0.75,
         )
 
+    def _rule_hc_as_001(
+        self,
+        prior_findings: Tuple[DiscoveryFinding, ...],
+    ) -> DiscoveryFinding | None:
+        """
+        HC-AS-001: Application / Service Interface Exposure.
+
+        Trigger:
+        - One or more prior application/service findings exist where:
+          - domain == "application_service"
+          - category == "application_service_exposed"
+          - evidence.application_service_hint is one of:
+            "HTTP", "HTTPS", "HTTP-Alt", "HTTPS-Alt"
+
+        Output:
+        - category = "application_service_interface_exposure"
+        - confidence = 0.70
+        - target = host-only target from context
+        """
+
+        # Define the exact allowed governed application/service hints.
+        # These values are specification-bound and producer-owned.
+        allowed_application_service_hints = {
+            "HTTP",
+            "HTTPS",
+            "HTTP-Alt",
+            "HTTPS-Alt",
+        }
+
+        # Collect only qualifying upstream findings for this rule.
+        # Preserve upstream order and do not mutate input.
+        matching_findings: List[DiscoveryFinding] = []
+
+        for finding in prior_findings:
+            # Rule applies only to Application / Service domain findings.
+            if finding.domain != "application_service":
+                continue
+
+            # Rule applies only to approved application/service exposure findings.
+            if finding.category != "application_service_exposed":
+                continue
+
+            # Extract the governed producer-owned evidence field exactly as defined.
+            application_service_hint = finding.evidence.get("application_service_hint")
+
+            # Keep only exact-match approved vocabulary values.
+            if application_service_hint in allowed_application_service_hints:
+                matching_findings.append(finding)
+
+        # If no qualifying findings exist, this rule emits nothing.
+        if not matching_findings:
+            return None
+
+        # Build deterministic evidence structure required by the spec.
+        evidence = self._build_evidence(
+            rule_id="HC-AS-001",
+            source_findings=matching_findings,
+            rationale="Host exposes one or more bounded application/service interfaces via approved externally reachable connect-only exposure signals",
+        )
+
+        # Emit exactly one derived finding for this rule and target.
+        return self._make_finding(
+            category="application_service_interface_exposure",
+            evidence=evidence,
+            confidence=0.70,
+        )
+
+    def _rule_hc_tl_001(
+        self,
+        prior_findings: Tuple[DiscoveryFinding, ...],
+    ) -> DiscoveryFinding | None:
+        """
+        HC-TL-001: Telemetry / Logging Interface Exposure.
+
+        Trigger:
+        - One or more prior telemetry/logging findings exist where:
+          - domain == "telemetry_logging"
+          - category == "telemetry_logging_exposed"
+          - evidence.telemetry_logging_hint is one of:
+            "SYSLOG", "SYSLOG-TLS", "GELF", "LOG-FORWARD",
+            "OTLP-GRPC", or "OTLP-HTTP"
+
+        Output:
+        - category = "telemetry_logging_interface_exposure"
+        - confidence = 0.70
+        - target = host-only target from context
+        """
+
+        # Define the exact allowed governed telemetry/logging hints.
+        # These values are specification-bound and producer-owned.
+        allowed_telemetry_logging_hints = {
+            "SYSLOG",
+            "SYSLOG-TLS",
+            "GELF",
+            "LOG-FORWARD",
+            "OTLP-GRPC",
+            "OTLP-HTTP",
+        }
+
+        # Collect only qualifying upstream findings for this rule.
+        # Preserve upstream order and do not mutate input.
+        matching_findings: List[DiscoveryFinding] = []
+
+        for finding in prior_findings:
+            # Rule applies only to Telemetry / Logging domain findings.
+            if finding.domain != "telemetry_logging":
+                continue
+
+            # Rule applies only to approved telemetry/logging exposure findings.
+            if finding.category != "telemetry_logging_exposed":
+                continue
+
+            # Extract the governed producer-owned evidence field exactly as defined.
+            telemetry_logging_hint = finding.evidence.get("telemetry_logging_hint")
+
+            # Keep only exact-match approved vocabulary values.
+            if telemetry_logging_hint in allowed_telemetry_logging_hints:
+                matching_findings.append(finding)
+
+        # If no qualifying findings exist, this rule emits nothing.
+        if not matching_findings:
+            return None
+
+        # Build deterministic evidence structure required by the spec.
+        evidence = self._build_evidence(
+            rule_id="HC-TL-001",
+            source_findings=matching_findings,
+            rationale="Host exposes one or more bounded telemetry/logging interfaces via approved externally reachable connect-only exposure signals",
+        )
+
+        # Emit exactly one derived finding for this rule and target.
+        return self._make_finding(
+            category="telemetry_logging_interface_exposure",
+            evidence=evidence,
+            confidence=0.70,
+        )
+
+
     def _rule_hc_net_001(
         self,
         prior_findings: Tuple[DiscoveryFinding, ...],
@@ -432,10 +588,15 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         - One or more prior network findings exist where:
           - domain == "network"
           - category == "open_port"
-        - AND no prior identity findings exist where:
+        - AND the same port-qualified target is not already classified by:
           - domain == "identity"
           - category == "identity_service_exposed"
-          - target matches the same port-qualified target as the network finding
+        - AND is not already classified by:
+          - domain == "application_service"
+          - category == "application_service_exposed"
+        - AND is not already classified by:
+          - domain == "telemetry_logging"
+          - category == "telemetry_logging_exposed"
 
         Output:
         - category = "unclassified_network_service_exposure"
@@ -453,7 +614,8 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
                 continue
             network_open_ports.append(finding)
 
-        # Collect the full set of port-qualified targets already classified by Identity.
+        # Collect the full set of port-qualified targets already classified by
+        # currently authorized downstream-producing discovery domains.
         classified_identity_targets = {
             finding.target
             for finding in prior_findings
@@ -461,12 +623,33 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
             and finding.category == "identity_service_exposed"
         }
 
-        # Keep only network open ports that were not classified by Identity
-        # for the same exact port-qualified target.
+        classified_application_service_targets = {
+            finding.target
+            for finding in prior_findings
+            if finding.domain == "application_service"
+            and finding.category == "application_service_exposed"
+        }
+
+        classified_telemetry_logging_targets = {
+            finding.target
+            for finding in prior_findings
+            if finding.domain == "telemetry_logging"
+            and finding.category == "telemetry_logging_exposed"
+        }
+
+        classified_targets = (
+            classified_identity_targets
+            | classified_application_service_targets
+            | classified_telemetry_logging_targets
+        )
+
+        # Keep only network open ports that were not already classified by an
+        # authorized producing discovery domain for the same exact
+        # port-qualified target.
         matching_findings: List[DiscoveryFinding] = []
 
         for finding in network_open_ports:
-            if finding.target in classified_identity_targets:
+            if finding.target in classified_targets:
                 continue
             matching_findings.append(finding)
 
@@ -478,8 +661,7 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         evidence = self._build_evidence(
             rule_id="HC-NET-001",
             source_findings=matching_findings,
-            rationale="Host exposes a reachable network service that is not classified by the current Identity Discovery rule set",
-        )
+            rationale="Host exposes a reachable network service that is not classified by the currently authorized Identity, Application / Service, or Telemetry / Logging discovery rule sets",        )
 
         # Emit exactly one derived finding for this rule and target.
         return self._make_finding(
@@ -568,27 +750,59 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         - AND no prior identity findings exist where:
           - domain == "identity"
           - category == "identity_service_exposed"
+        - AND the qualifying network port-qualified targets are not already
+          classified by:
+          - domain == "application_service"
+          - category == "application_service_exposed"
+        - AND are not already classified by:
+          - domain == "telemetry_logging"
+          - category == "telemetry_logging_exposed"
 
         Output:
         - category = "tcp_reachable_host_without_identity_exposure"
         - confidence = 0.55
         - target = host-only target from context
-
-        Constraints:
-        - This rule is TCP-specific only
-        - ICMP findings MUST NOT be used to satisfy this rule
-        - TCP reachability in this rule is an inference-only concept derived from observed service exposure
-        - This rule MUST NOT be interpreted as a statement about unobserved ports or general host availability
         """
 
         # Collect network open_port findings that indicate TCP-reachable service exposure.
         # This rule is strictly limited to TCP-based evidence.
-        matching_network_findings: List[DiscoveryFinding] = []
+        network_open_port_findings: List[DiscoveryFinding] = []
 
         for finding in prior_findings:
             if finding.domain != "network":
                 continue
             if finding.category != "open_port":
+                continue
+            network_open_port_findings.append(finding)
+
+        # Keep only TCP-reachable network targets that were not already classified
+        # by the currently authorized Application / Service or Telemetry / Logging
+        # producing domains for the same exact port-qualified target.
+        #
+        # Identity exposure is handled separately as a full-rule suppressor above.
+        classified_application_service_targets = {
+            finding.target
+            for finding in prior_findings
+            if finding.domain == "application_service"
+            and finding.category == "application_service_exposed"
+        }
+
+        classified_telemetry_logging_targets = {
+            finding.target
+            for finding in prior_findings
+            if finding.domain == "telemetry_logging"
+            and finding.category == "telemetry_logging_exposed"
+        }
+
+        classified_targets = (
+            classified_application_service_targets
+            | classified_telemetry_logging_targets
+        )
+
+        matching_network_findings: List[DiscoveryFinding] = []
+
+        for finding in network_open_port_findings:
+            if finding.target in classified_targets:
                 continue
             matching_network_findings.append(finding)
 
@@ -608,7 +822,7 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         evidence = self._build_evidence(
             rule_id="HC-NET-003",
             source_findings=matching_network_findings,
-            rationale="Host exposes one or more TCP-reachable services from the discovery vantage point, but no identity-related service exposure was observed",
+            rationale="Host exposes one or more TCP-reachable services from the discovery vantage point that are not classified by the currently authorized Identity, Application / Service, or Telemetry / Logging discovery rule sets",
         )
 
         # Emit exactly one derived finding for this rule and target.
