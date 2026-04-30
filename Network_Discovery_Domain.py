@@ -58,10 +58,10 @@ from Core_Framework import DiscoveryContext, DiscoveryFinding, DiscoveryModule
 
 
 def default_port_map() -> Dict[int, str]:
-    """Return the default enterprise-relevant port -> service hint mapping."""
+    """Return the approved Network TCP port -> service_hint mapping."""
 
-    # These are common attack surface and administrative exposure points.
-    # They are intentionally limited to reduce scan footprint.
+    # Approved project-scoped Network TCP inventory.
+    # Classification is static, deterministic, and Network-owned.
     return {
         21: "FTP",
         22: "SSH",
@@ -73,11 +73,19 @@ def default_port_map() -> Dict[int, str]:
         389: "LDAP",
         443: "HTTPS",
         445: "SMB",
+        514: "SYSLOG",
+        636: "LDAPS",
         3389: "RDP",
+        4317: "OTLP-GRPC",
+        4318: "OTLP-HTTP",
         5985: "WinRM",
         5986: "WinRM-HTTPS",
+        6514: "SYSLOG-TLS",
+        8080: "HTTP-Alt",
+        8443: "HTTPS-Alt",
+        12201: "GELF",
+        24224: "LOG-FORWARD",
     }
-
 
 # =========================
 # Network Discovery Domain
