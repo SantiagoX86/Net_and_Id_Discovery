@@ -79,7 +79,7 @@ class IdentityDiscoveryDomain(DiscoveryModule):
             return findings
 
         for port in self._probe_order:
-            service_hint = self.identity_service_ports.get(port, "unknown")
+            identity_service_hint = self.identity_service_ports.get(port, "unknown")
             is_open, err = _tcp_connect(target, port, self.timeout_s)
 
             if is_open:
@@ -106,7 +106,7 @@ class IdentityDiscoveryDomain(DiscoveryModule):
                         evidence={
                             "method": "tcp_connect",
                             "port": port,
-                            "service_hint": service_hint,
+                            "identity_service_hint": identity_service_hint,
                             "note": note,
                             "timeout_s": self.timeout_s,
                         },
@@ -123,7 +123,7 @@ class IdentityDiscoveryDomain(DiscoveryModule):
                             evidence={
                                 "method": "tcp_connect",
                                 "port": port,
-                                "service_hint": service_hint,
+                                "identity_service_hint": identity_service_hint,
                                 "error": err,
                                 "timeout_s": self.timeout_s,
                             },
