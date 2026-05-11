@@ -161,7 +161,7 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         - One or more prior identity findings exist where:
           - domain == "identity"
           - category == "identity_service_exposed"
-          - evidence.service_hint is "WinRM" or "WinRM-HTTPS"
+          - evidence.identity_service_hint is "WinRM" or "WinRM-HTTPS"
 
         Output:
         - category = "remote_management_exposure"
@@ -186,11 +186,11 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
             if finding.category != "identity_service_exposed":
                 continue
 
-            # Extract service hint from the evidence structure.
-            service_hint = finding.evidence.get("service_hint")
+            # Extract Identity-owned service hint from the evidence structure.
+            identity_service_hint = finding.evidence.get("identity_service_hint")
 
             # Keep only WinRM / WinRM-HTTPS exposure findings.
-            if service_hint in allowed_service_hints:
+            if identity_service_hint in allowed_service_hints:
                 matching_findings.append(finding)
 
         # If no qualifying findings exist, this rule emits nothing.
@@ -222,7 +222,7 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         - One or more prior identity findings exist where:
           - domain == "identity"
           - category == "identity_service_exposed"
-          - evidence.service_hint is "RDP"
+          - evidence.identity_service_hint is "RDP"
 
         Output:
         - category = "remote_management_exposure"
@@ -246,11 +246,11 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
             if finding.category != "identity_service_exposed":
                 continue
 
-            # Extract service hint from the evidence structure.
-            service_hint = finding.evidence.get("service_hint")
+            # Extract Identity-owned service hint from the evidence structure.
+            identity_service_hint = finding.evidence.get("identity_service_hint")
 
             # Keep only RDP exposure findings.
-            if service_hint == allowed_service_hint:
+            if identity_service_hint == allowed_service_hint:
                 matching_findings.append(finding)
 
         # If no qualifying findings exist, this rule emits nothing.
@@ -282,7 +282,7 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         - One or more prior identity findings exist where:
           - domain == "identity"
           - category == "identity_service_exposed"
-          - evidence.service_hint is "LDAP", "LDAPS", or "Kerberos"
+          - evidence.identity_service_hint is "LDAP", "LDAPS", or "Kerberos"
 
         Output:
         - category = "directory_service_exposure"
@@ -307,11 +307,11 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
             if finding.category != "identity_service_exposed":
                 continue
 
-            # Extract service hint from the evidence structure.
-            service_hint = finding.evidence.get("service_hint")
+            # Extract Identity-owned service hint from the evidence structure.
+            identity_service_hint = finding.evidence.get("identity_service_hint")
 
             # Keep only directory-service exposure findings.
-            if service_hint in allowed_service_hints:
+            if identity_service_hint in allowed_service_hints:
                 matching_findings.append(finding)
 
         # If no qualifying findings exist, this rule emits nothing.
@@ -343,7 +343,7 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         - One or more prior identity findings exist where:
           - domain == "identity"
           - category == "identity_service_exposed"
-          - evidence.service_hint is "SMB" or "NetBIOS-SSN"
+          - evidence.identity_service_hint is "SMB" or "NetBIOS-SSN"
 
         Output:
         - category = "smb_exposure_posture"
@@ -367,11 +367,11 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
             if finding.category != "identity_service_exposed":
                 continue
 
-            # Extract service hint from the evidence structure.
-            service_hint = finding.evidence.get("service_hint")
+            # Extract Identity-owned service hint from the evidence structure.
+            identity_service_hint = finding.evidence.get("identity_service_hint")
 
             # Keep only SMB / NetBIOS-SSN exposure findings.
-            if service_hint in allowed_service_hints:
+            if identity_service_hint in allowed_service_hints:
                 matching_findings.append(finding)
 
         # If no qualifying findings exist, this rule emits nothing.
@@ -403,7 +403,7 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         - One or more prior identity findings exist where:
           - domain == "identity"
           - category == "identity_service_exposed"
-          - evidence.service_hint == "RPC"
+          - evidence.identity_service_hint == "RPC"
 
         Output:
         - category = "rpc_exposure_indicator"
@@ -419,9 +419,11 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
             if finding.category != "identity_service_exposed":
                 continue
 
-            service_hint = finding.evidence.get("service_hint")
+            # Extract Identity-owned service hint from the evidence structure.
+            identity_service_hint = finding.evidence.get("identity_service_hint")
 
-            if service_hint == "RPC":
+            # Keep only RPC exposure findings.
+            if identity_service_hint == "RPC":
                 matching_findings.append(finding)
 
         if not matching_findings:
