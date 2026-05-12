@@ -144,14 +144,12 @@ def generate_markdown_report(run: DiscoveryRunResult) -> str:
     if not open_ports:
         lines.append("- No externally reachable services observed")
     else:
-        lines.append("| Port | Service | Confidence |")
-        lines.append("|------|---------|------------|")
+        lines.append("| Port | Service |")
+        lines.append("|------|---------|")
         for finding in open_ports:
             port = finding.evidence.get("port")
             service = finding.evidence.get("service_hint")
-            conf = finding.confidence
-            lines.append(f"| {port} | {service} | {conf} |")
-
+            lines.append(f"| {port} | {service} |")
     lines.append("")
 
     # -------------------------

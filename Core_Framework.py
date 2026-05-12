@@ -80,7 +80,7 @@ class DiscoveryFinding:
 
     Why it exists:
     - Establishes a consistent, machine-readable output contract across domains
-    - Supports auditing (timestamp, evidence) and analysis (category, confidence)
+    - Supports auditing through producer-owned evidence and UTC observation timestamps
 
     How it fits:
     - Domains emit lists of DiscoveryFinding objects
@@ -99,9 +99,6 @@ class DiscoveryFinding:
 
     # Evidence supporting the observation (method, raw details, etc.).
     evidence: Dict[str, Any]
-
-    # Confidence score (0.0–1.0) reflecting observation reliability.
-    confidence: float
 
     # When the observation was recorded (UTC).
     observed_at: datetime

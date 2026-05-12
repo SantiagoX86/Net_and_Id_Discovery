@@ -171,7 +171,6 @@ class ApplicationServiceDiscoveryDomain(DiscoveryModule):
                         "note": note_map[port],
                         "timeout_s": self.timeout_s,
                     },
-                    confidence=0.70,
                 )
             )
 
@@ -184,7 +183,6 @@ class ApplicationServiceDiscoveryDomain(DiscoveryModule):
         category: str,
         target: str,
         evidence: Dict,
-        confidence: float,
     ) -> DiscoveryFinding:
         """
         Construct a contract-native DiscoveryFinding.
@@ -197,6 +195,5 @@ class ApplicationServiceDiscoveryDomain(DiscoveryModule):
             category=category,  # Approved category for this domain
             target=target,  # Port-qualified target for the observed exposure
             evidence=evidence,  # Governed direct-observation evidence only
-            confidence=confidence,  # Static deterministic confidence value
             observed_at=_utc_now(),  # UTC-normalized timestamp
         )
