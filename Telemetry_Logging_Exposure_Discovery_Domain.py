@@ -176,7 +176,6 @@ class TelemetryLoggingExposureDiscoveryDomain(DiscoveryModule):
                         "note": note_map[port],
                         "timeout_s": self.timeout_s,
                     },
-                    confidence=0.70,
                 )
             )
 
@@ -189,7 +188,6 @@ class TelemetryLoggingExposureDiscoveryDomain(DiscoveryModule):
         category: str,
         target: str,
         evidence: Dict,
-        confidence: float,
     ) -> DiscoveryFinding:
         """
         Construct a contract-native DiscoveryFinding.
@@ -203,6 +201,5 @@ class TelemetryLoggingExposureDiscoveryDomain(DiscoveryModule):
             category=category,
             target=target,
             evidence=evidence,
-            confidence=confidence,
             observed_at=_utc_now(),
         )

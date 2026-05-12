@@ -165,7 +165,7 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
 
         Output:
         - category = "remote_management_exposure"
-        - confidence = 0.85
+        - deterministic rule-derived finding
         - target = host-only target from context
         """
 
@@ -208,7 +208,6 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         return self._make_finding(
             category="remote_management_exposure",
             evidence=evidence,
-            confidence=0.85,
         )
 
     def _rule_hc_rm_002(
@@ -226,7 +225,7 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
 
         Output:
         - category = "remote_management_exposure"
-        - confidence = 0.85
+        - deterministic rule-derived finding
         - target = host-only target from context
         """
 
@@ -268,7 +267,6 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         return self._make_finding(
             category="remote_management_exposure",
             evidence=evidence,
-            confidence=0.85,
         )
 
     def _rule_hc_ds_001(
@@ -286,7 +284,7 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
 
         Output:
         - category = "directory_service_exposure"
-        - confidence = 0.90
+        - deterministic rule-derived finding
         - target = host-only target from context
         """
 
@@ -329,7 +327,6 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         return self._make_finding(
             category="directory_service_exposure",
             evidence=evidence,
-            confidence=0.90,
         )
 
     def _rule_hc_smb_001(
@@ -347,7 +344,7 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
 
         Output:
         - category = "smb_exposure_posture"
-        - confidence = 0.80
+        - deterministic rule-derived finding
         - target = host-only target from context
         """
 
@@ -389,7 +386,6 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         return self._make_finding(
             category="smb_exposure_posture",
             evidence=evidence,
-            confidence=0.80,
         )
 
     def _rule_hc_rpc_001(
@@ -407,7 +403,7 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
 
         Output:
         - category = "rpc_exposure_indicator"
-        - confidence = 0.75
+        - deterministic rule-derived finding
         """
 
         matching_findings: List[DiscoveryFinding] = []
@@ -438,7 +434,6 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         return self._make_finding(
             category="rpc_exposure_indicator",
             evidence=evidence,
-            confidence=0.75,
         )
 
     def _rule_hc_as_001(
@@ -457,7 +452,7 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
 
         Output:
         - category = "application_service_interface_exposure"
-        - confidence = 0.70
+        - deterministic rule-derived finding
         - target = host-only target from context
         """
 
@@ -505,7 +500,6 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         return self._make_finding(
             category="application_service_interface_exposure",
             evidence=evidence,
-            confidence=0.70,
         )
 
     def _rule_hc_tl_001(
@@ -525,7 +519,7 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
 
         Output:
         - category = "telemetry_logging_interface_exposure"
-        - confidence = 0.70
+        - deterministic rule-derived finding
         - target = host-only target from context
         """
 
@@ -575,7 +569,6 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         return self._make_finding(
             category="telemetry_logging_interface_exposure",
             evidence=evidence,
-            confidence=0.70,
         )
 
 
@@ -602,7 +595,7 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
 
         Output:
         - category = "unclassified_network_service_exposure"
-        - confidence = 0.60
+        - deterministic rule-derived finding
         - target = host-only target from context
         """
 
@@ -669,7 +662,6 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         return self._make_finding(
             category="unclassified_network_service_exposure",
             evidence=evidence,
-            confidence=0.60,
         )
 
     def _rule_hc_net_002(
@@ -690,7 +682,7 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
 
         Output:
         - category = "icmp_reachable_host_without_identity_exposure"
-        - confidence = 0.55
+        - deterministic rule-derived finding
         - target = host-only target from context
 
         Constraints:
@@ -735,7 +727,6 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         return self._make_finding(
             category="icmp_reachable_host_without_identity_exposure",
             evidence=evidence,
-            confidence=0.55,
         )
 
     def _rule_hc_net_003(
@@ -762,7 +753,7 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
 
         Output:
         - category = "tcp_reachable_host_without_identity_exposure"
-        - confidence = 0.55
+        - deterministic rule-derived finding
         - target = host-only target from context
         """
 
@@ -831,7 +822,6 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         return self._make_finding(
             category="tcp_reachable_host_without_identity_exposure",
             evidence=evidence,
-            confidence=0.55,
         )
 
     # ------------------------------------------------------------------
@@ -947,7 +937,6 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
         *,
         category: str,
         evidence: Dict,
-        confidence: float,
     ) -> DiscoveryFinding:
         """
         Construct a new DiscoveryFinding object for this domain.
@@ -958,6 +947,5 @@ class HostConfigDiscoveryDomain(DiscoveryModule):
             category=category,  # Must be one of approved categories
             target=self._host_target(),  # Host-only target (no port)
             evidence=evidence,  # Structured rule evidence
-            confidence=confidence,  # Static confidence (per rule)
             observed_at=_utc_now(),  # Deterministic UTC timestamp
         )

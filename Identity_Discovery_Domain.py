@@ -110,7 +110,6 @@ class IdentityDiscoveryDomain(DiscoveryModule):
                             "note": note,
                             "timeout_s": self.timeout_s,
                         },
-                        confidence=0.7,
                     )
                 )
             else:
@@ -127,7 +126,6 @@ class IdentityDiscoveryDomain(DiscoveryModule):
                                 "error": err,
                                 "timeout_s": self.timeout_s,
                             },
-                            confidence=0.5,
                         )
                     )
 
@@ -139,7 +137,6 @@ class IdentityDiscoveryDomain(DiscoveryModule):
         category: str,
         target: str,
         evidence: Dict,
-        confidence: float,
     ) -> DiscoveryFinding:
         """Construct a contract-native DiscoveryFinding."""
         return DiscoveryFinding(
@@ -147,6 +144,5 @@ class IdentityDiscoveryDomain(DiscoveryModule):
             category=category,
             target=target,
             evidence=evidence,
-            confidence=confidence,
             observed_at=_utc_now(),
         )

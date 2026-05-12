@@ -198,7 +198,6 @@ class NetworkDiscoveryModule(DiscoveryModule):
                         "reachable": False,
                         "error": str(exc),
                     },
-                    confidence=0.4,
                     observed_at=datetime.now(timezone.utc),
                 )
             ]
@@ -214,8 +213,6 @@ class NetworkDiscoveryModule(DiscoveryModule):
                     "reachable": alive,
                     "timeout_s": self.ping_timeout_s,
                 },
-                # Confidence is higher on positive reachability.
-                confidence=0.9 if alive else 0.6,
                 observed_at=datetime.now(timezone.utc),
             )
         ]
@@ -247,7 +244,6 @@ class NetworkDiscoveryModule(DiscoveryModule):
                             "service_hint": self.port_map.get(port, "unknown"),
                             "timeout_s": self.tcp_timeout_s,
                         },
-                        confidence=0.85,
                         observed_at=datetime.now(timezone.utc),
                     )
                 )
@@ -270,7 +266,6 @@ class NetworkDiscoveryModule(DiscoveryModule):
                             "timeout_s": self.tcp_timeout_s,
                             "error": error,
                         },
-                        confidence=0.5,
                         observed_at=datetime.now(timezone.utc),
                     )
                 )
