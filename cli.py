@@ -35,6 +35,10 @@ from Telemetry_Logging_Exposure_Discovery_Domain import TelemetryLoggingExposure
 # This import is preserved as part of the controlled module registration set
 from Host_Config_Discovery_Domain import HostConfigDiscoveryDomain
 
+# Import the M8 Correlation correlation-only consuming domain
+# This import is limited to controlled module registration
+from Correlation_Domain import CorrelationDomain
+
 # Import the existing validated output/reporting functions
 from Output_Reporting import generate_markdown_report, serialize_run_to_json
 
@@ -192,14 +196,19 @@ def main() -> None:
     # It must execute after all discovery producers so it can consume prior findings
     host_config = HostConfigDiscoveryDomain(ctx)
 
+    # Instantiate the Correlation Domain
+    # This is the M8 correlation-only downstream consuming domain
+    # It must execute after Host Configuration so it can consume the full governed finding set
+    correlation = CorrelationDomain(ctx)
+
     # Build the orchestrator with modules in strict deterministic order
-    # M6 and M7 additions are registration-only changes; no control logic is altered
     orchestrator = DiscoveryOrchestrator([
         network,       # First: network findings
         identity,      # Second: identity findings
         application_service,  # Third: application/service discovery findings
         telemetry_logging,  # Fourth: telemetry/logging discovery findings
         host_config,  # Fifth: inference-only host configuration findings
+        correlation,  # Sixth: correlation-only findings
     ])
 
     # Execute the orchestrated discovery run using the shared context
