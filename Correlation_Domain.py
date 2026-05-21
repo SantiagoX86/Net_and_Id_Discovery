@@ -2,7 +2,6 @@
 # Correlation_Domain.py
 #
 # Milestone: M8 – Correlation Domain
-# Phase C – Network-Inclusive Correlation
 #
 # This module implements a correlation-only consuming domain that:
 # - Consumes prior findings from the orchestrator as read-only input
@@ -12,7 +11,7 @@
 # - Performs NO socket usage, probing, authentication, negotiation, or parsing
 # - Preserves upstream findings unchanged
 #
-# Phase C behavior:
+# Correlation execution behavior:
 # - Preserves specialized-domain correlation rules
 # - Adds Network-inclusive correlation rules
 # - Uses Identity, Application / Service, and Telemetry / Logging findings
@@ -46,10 +45,11 @@ class CorrelationDomain(DiscoveryModule):
     - Apply deterministic, specification-defined correlation logic
     - Emit append-only correlation findings without modifying upstream findings
 
-    Phase B constraints:
-    - Specialized-domain correlation only
-    - No Network-inclusive correlation rules
-    - No Host Configuration correlation context
+    Constraints:
+    - Specialized-domain and Network-inclusive correlation rules are supported
+    - Network findings are used only for unclassified Network exposure relationships
+    - Expected Network/specialized overlap is not treated as correlation by itself
+    - Host Configuration findings are not consumed by current M8 rules
     - No mutation, suppression, deduplication, merge, normalization, or
       reinterpretation of upstream findings
     """
@@ -86,7 +86,7 @@ class CorrelationDomain(DiscoveryModule):
         Outputs:
         - New correlation-owned DiscoveryFinding objects only
 
-        Phase C behavior:
+        Correlation execution behavior:
         - Evaluate specialized-domain rules in fixed order
         - Enforce tri-domain precedence
         - Prevent pairwise specialized-domain fallback rules when tri-domain correlation emits
@@ -204,7 +204,7 @@ class CorrelationDomain(DiscoveryModule):
         category: str,
     ) -> List[DiscoveryFinding]:
         """
-        Select authorized Phase B source findings only.
+        Select authorized source findings only.
 
         This method:
         - Uses exact domain/category matching
