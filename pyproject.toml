@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wauig-bank-discovery-orchestration-framework"
+version = "0.9.0"
+description = "Agentless, non-exploitative enterprise discovery orchestration framework."
+requires-python = ">=3.10"
+dependencies = []
+authors = [
+  { name = "Sean Santiago" }
+]
+license = { text = "Proprietary" }
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Private :: Do Not Upload"
+]
+
+[project.scripts]
+wauig-discovery = "cli:main"
+
+[tool.setuptools]
+py-modules = [
+  "Application_Service_Discovery_Domain",
+  "cli",
+  "Core_Framework",
+  "Correlation_Domain",
+  "Host_Config_Discovery_Domain",
+  "Identity_Discovery_Domain",
+  "Network_Discovery_Domain",
+  "Output_Reporting",
+  "Telemetry_Logging_Exposure_Discovery_Domain"
+]
