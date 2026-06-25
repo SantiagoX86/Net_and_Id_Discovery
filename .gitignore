@@ -1,19 +1,47 @@
-# Python
+# Python cache artifacts
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
 
 # Virtual environments
 .venv/
 venv/
+env/
+ENV/
 
-# IDE
+# Python packaging and build artifacts
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+
+# Python test, coverage, and tooling cache artifacts
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# IDE and editor artifacts
 .idea/
+.vscode/
+*.swp
+*.swo
 
-# Generated artifacts
+# OS noise files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Generated framework output artifacts
 run_results*.json
 network_report*.md
-*.log
-# Ignore local templates / scratch
-Template.md
-discovery_report.md
 discovery_run.json
+discovery_report.md
+
+# Logs
+*.log
+
+# Local templates / scratch files
+Template.md
