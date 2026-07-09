@@ -19,6 +19,7 @@ import ipaddress  # Used to validate IPv4 input safely
 import re  # Used to validate hostnames with a regex
 import socket  # Used only to retrieve the local source hostname (not for probing here)
 import json  # Used to write JSON output artifacts
+from pathlib import Path  # Used for controlled local artifact path handling
 from datetime import datetime, timezone  # Used to create UTC-normalized run timestamps
 
 # Import core orchestration primitives from the frozen core framework
@@ -230,21 +231,55 @@ def main() -> None:
     # Generate the structured JSON-serializable run object
     run_json = serialize_run_to_json(run)
 
-    # Build the Markdown artifact output path
-    md_output_path = f"{args.output_dir}/discovery_report.md"
-
-    # Build the JSON artifact output path
-    json_output_path = f"{args.output_dir}/discovery_run.json"
-
     # Only write files if the operator did not disable file output
     if not args.no_files:
-        # Write the Markdown report artifact
-        with open(md_output_path, "w", encoding="utf-8") as f:
-            f.write(report_md)
+        # Derive one shared artifact timestamp from the existing run context timestamp
+        artifact_timestamp = (
+            run.context.run_started_at
+            .astimezone(timezone.utc)
+            .strftime("%Y%m%d_%H%M%SZ")
+        )
 
-        # Write the JSON run artifact
-        with open(json_output_path, "w", encoding="utf-8") as f:
+        # Treat --output-dir as the parent output directory
+        parent_output_dir = Path(args.output_dir)
+
+        # Build the governed artifact subdirectories
+        results_dir = parent_output_dir / "results"
+        reports_dir = parent_output_dir / "reports"
+
+        # Create required local artifact directories when file output is enabled
+        try:
+            results_dir.mkdir(parents=True, exist_ok=True)
+            reports_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            print(f"[ERROR] Failed to create output artifact directories: {e}")
+            raise SystemExit(1)
+
+        # Build the timestamped JSON artifact output path
+        json_output_path = results_dir / f"discovery_run_{artifact_timestamp}.json"
+
+        # Build the timestamped Markdown artifact output path
+        md_output_path = reports_dir / f"discovery_report_{artifact_timestamp}.md"
+
+        # Fail closed rather than overwrite an existing timestamped artifact
+        existing_artifacts = [
+            artifact_path
+            for artifact_path in (json_output_path, md_output_path)
+            if artifact_path.exists()
+        ]
+
+        if existing_artifacts:
+            for artifact_path in existing_artifacts:
+                print(f"[ERROR] Output artifact already exists: {artifact_path}")
+            raise SystemExit(1)
+
+        # Write the JSON run artifact using exclusive creation
+        with json_output_path.open("x", encoding="utf-8") as f:
             json.dump(run_json, f, indent=2)
+
+        # Write the Markdown report artifact using exclusive creation
+        with md_output_path.open("x", encoding="utf-8") as f:
+            f.write(report_md)
 
     # Print the Markdown report to console for immediate operator review
     print("=== MARKDOWN REPORT ===")
