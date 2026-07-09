@@ -40,6 +40,10 @@ network_report*.md
 discovery_run.json
 discovery_report.md
 
+# Generated framework output artifact directories
+/results/
+/reports/
+
 # Logs
 *.log
 

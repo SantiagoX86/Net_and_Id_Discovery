@@ -169,14 +169,30 @@ wauig-discovery --target <authorized-target> --no-files
 
 ## Output Artifacts
 
-When file output is enabled, the framework writes the following files to the selected output directory:
+When file output is enabled, the framework writes timestamped artifacts under the selected parent output directory.
 
-- `discovery_run.json`
-- `discovery_report.md`
+If `--output-dir` is supplied, generated artifacts are written under:
 
-`discovery_run.json` contains the structured machine-readable run output.
+```text
+<output-directory>/
+  results/
+    discovery_run_YYYYMMDD_HHMMSSZ.json
+  reports/
+    discovery_report_YYYYMMDD_HHMMSSZ.md
+```
 
-`discovery_report.md` contains the human-readable Markdown report.
+If `--output-dir` is not supplied, the current working directory is used as the parent output location:
+
+```text
+./results/discovery_run_YYYYMMDD_HHMMSSZ.json
+./reports/discovery_report_YYYYMMDD_HHMMSSZ.md
+```
+
+The JSON artifact contains the structured machine-readable run output.
+
+The Markdown artifact contains the human-readable discovery report.
+
+The JSON and Markdown artifacts from the same execution share a timestamp derived from the run start time.
 
 When `--no-files` is used, file artifacts are not written and output is printed to the console.
 
